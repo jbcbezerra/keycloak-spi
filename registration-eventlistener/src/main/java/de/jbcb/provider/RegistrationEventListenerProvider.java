@@ -25,11 +25,24 @@ public class RegistrationEventListenerProvider implements EventListenerProvider 
     //https://dev.to/adwaitthattey/building-an-event-listener-spi-plugin-for-keycloak-2044
     private final KeycloakSession session;
 
+    private static final String getBasicAuthenticationHeader(String username, String password) {
+        String valueToEncode = username + ":" + password;
+        return "Basic " + Base64.getEncoder().encodeToString(valueToEncode.getBytes());
+    }
+    
     @Override
     public void onEvent(Event event) {
         if (EventType.REGISTER.equals(event.getType())) {
             log.info("Triggered <%s> EVENT", event.getType());
+       
+            // request accesstoken for kc client
+            HttpRequest request = HttpRequest.newBuilder()
+              .POST()
+              .uri(new URI("kc token uri"))
+              .header("Authorization", getBasicAuthenticationHeader("kc-client-username", "kc-client-password"))
+              .build();
 
+            
             RealmModel realm = session.realms().getRealm(event.getRealmId());
             UserModel newRegisteredUser = session.users().getUserById(realm,event.getUserId());
 /*
